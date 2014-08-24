@@ -94,8 +94,10 @@ public class GameView extends SurfaceView implements Callback {
 		public void run() {
 			while(shouldContinue) {
 				Canvas c = surfaceHolder.lockCanvas();
-				draw(c);
-				surfaceHolder.unlockCanvasAndPost(c);
+				if (c != null) {
+					draw(c);
+					surfaceHolder.unlockCanvasAndPost(c);
+				}
 			}
 		}
 		
