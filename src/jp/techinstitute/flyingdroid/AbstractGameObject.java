@@ -23,6 +23,7 @@ public abstract class AbstractGameObject {
     protected int bottom;
     protected double radius;
     protected Context context;
+    protected boolean alreadyHit = false;
     
 	/**
 	 * 
@@ -56,7 +57,8 @@ public abstract class AbstractGameObject {
 		double ylen = (y + radius) - (obj.y + obj.radius);
 		double len = Math.sqrt((xlen * xlen) + (ylen * ylen));
 		double radiusSum = radius + obj.radius;
-		if (len <= radiusSum) {
+		if (len <= radiusSum  && !alreadyHit) {
+			alreadyHit = true;
 			return true;
 		} else {
 			return false;

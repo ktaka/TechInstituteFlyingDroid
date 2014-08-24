@@ -3,6 +3,8 @@
  */
 package jp.techinstitute.flyingdroid;
 
+import java.util.Random;
+
 import android.content.Context;
 import android.graphics.Canvas;
 
@@ -11,6 +13,11 @@ import android.graphics.Canvas;
  *
  */
 public class Enemy extends AbstractGameObject {
+	static Random random;
+	
+	static {
+		random = new Random(System.currentTimeMillis());
+	}
 
 	/**
 	 * @param context
@@ -28,7 +35,12 @@ public class Enemy extends AbstractGameObject {
 		super.setMovingBoundary(left, top, right, bottom);
 		left -= width;
 		x = right;
-		y = 300;
+		this.bottom -= height;
+		y = getY();
+	}
+	
+	private int getY() {
+		return random.nextInt(bottom);
 	}
 
 	public void draw(Canvas c) {
@@ -36,6 +48,8 @@ public class Enemy extends AbstractGameObject {
 		x -= 5;
 		if(x < left) {
 			x = right;
+			y = getY();
+			alreadyHit = false;
 		}
 	}
 

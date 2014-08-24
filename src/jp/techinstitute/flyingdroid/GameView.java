@@ -5,6 +5,10 @@ package jp.techinstitute.flyingdroid;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -27,15 +31,42 @@ public class GameView extends SurfaceView implements Callback {
 		int height;
 		Droid droid;
 		static final int droidSize = 200;
-		Enemy enemy;
+		long frameNo = 0;
+		long nextGenFrame = 100;
+		
+		Context context;
+		
+		static final int EnemyNum = 5;
+		Enemy[] enemys;
 		static final int enemySize = 200;
+		
+		SoundPool sound;
+		int hitSoundId;
+		int rocketSoundId;
+		int rocketStreamId;
+		long resumeFrame = -1;
 		
 		public GameThread(SurfaceHolder surfaceHolder, Context context,
 				Handler handler) {
 			this.surfaceHolder = surfaceHolder;
 			droid = new Droid(context, droidSize, droidSize);
 			droid.setInitialPosition(100, 0);
-			enemy = new Enemy(context, enemySize, enemySize);
+
+			this.context = context;
+            enemys = new Enemy[EnemyNum];
+            enemys[0] = new Enemy(context, enemySize, enemySize);
+            
+            setupSoundPool();
+		}
+		
+		public void setupSoundPool() {
+			sound = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+			hitSoundId = sound.load(context, R.raw.quick_explosion, 1);
+			rocketSoundId = sound.load(context, R.raw.rockets, 1); 
+		}
+		
+		public void releaseSoundPool() {
+			sound.release();
 		}
 		
 		public void setViewSize(int width, int height) {
@@ -43,11 +74,20 @@ public class GameView extends SurfaceView implements Callback {
 			this.height = height;
 			
 			droid.setMovingBoundary(0, 0, width, height);
-			enemy.setMovingBoundary(0, 0, width, height);
+			for (int i = 0; i < EnemyNum; i++) {
+				if (enemys[i] != null) {
+					enemys[i].setMovingBoundary(0, 0, width, height);
+				}
+			}
 		}
 		
 		public void upliftDroid(boolean on) {
 			droid.uplift(on);
+			if (on) {
+				rocketStreamId = sound.play(rocketSoundId, 0.5f, 0.5f, 0, -1, 1.0f);
+			} else {
+				sound.stop(rocketStreamId);
+			}
 		}
 		
 		@Override
@@ -59,13 +99,50 @@ public class GameView extends SurfaceView implements Callback {
 			}
 		}
 		
+		public void drawHitPoint(Canvas c, int point) {
+			Paint paint = new Paint();
+			paint.setColor(Color.WHITE);
+			paint.setTextSize(80);
+			c.drawText("HP: " + point, 20, 100, paint);
+		}
+		
 		public void draw(Canvas c) {
-			if (enemy.isHit(droid)) {
-				droid.setImageResourceId(R.drawable.andou_die01);
+			int hitPoint = droid.getHitPoint();
+			for (int i = 0; i < EnemyNum; i++) {
+				if (enemys[i] != null && enemys[i].isHit(droid)) {
+					droid.setImageResourceId(R.drawable.andou_die01);
+					droid.hit();
+					hitPoint = droid.getHitPoint();
+					if (hitPoint == 0) {
+						resumeFrame = frameNo + 300;
+					}
+					sound.play(hitSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
+				}
 			}
 			c.drawARGB(255, 0, 0, 0);
 			droid.draw(c);
-			enemy.draw(c);
+			for (int i = 0; i < EnemyNum; i++) {
+				if (enemys[i] != null) {
+					enemys[i].draw(c);
+				}
+			}
+			
+			drawHitPoint(c, hitPoint);
+			if (frameNo == resumeFrame) {
+				droid.resume();
+			}
+			
+			if (frameNo == nextGenFrame) {
+				for (int i = 0; i < EnemyNum; i++) {
+					if (enemys[i] == null) {
+						enemys[i] = new Enemy(context, enemySize, enemySize);
+						enemys[i].setMovingBoundary(0, 0, width, height);
+						nextGenFrame += 100;
+						break;
+					}
+				}
+			}
+			frameNo++;
 		}
 	}
 	GameThread gameThread;

@@ -15,6 +15,8 @@ public class Droid extends AbstractGameObject {
 	private int defaultY;
 	private static final float DefaultVelocity = 2;
 	private float velocity = DefaultVelocity;
+	private static final int FullHitPoint = 100;
+	private int hitPoint = FullHitPoint;
 
 	/**
 	 * @param context
@@ -25,6 +27,25 @@ public class Droid extends AbstractGameObject {
 	public Droid(Context context, int width, int height) {
 		super(context, R.drawable.andou_diag01, width, height);
 	}
+	
+	public void hit() {
+		if (hitPoint > 0) {
+			hitPoint -= 10;
+		}
+		if (hitPoint <= 0) {
+			velocity = DefaultVelocity;
+			setImageResourceId(R.drawable.andou_explode10);
+		}
+	}
+	
+	public int getHitPoint() {
+		return hitPoint;
+	}
+	
+	public void resume() {
+		hitPoint = FullHitPoint;
+		setImageResourceId(R.drawable.andou_diag01);
+	}
 
 	@Override
 	public void setMovingBoundary(int left, int top, int right, int bottom) {
@@ -33,10 +54,14 @@ public class Droid extends AbstractGameObject {
 	}
 
 	public void uplift(boolean on) {
-		if (on) {
-			velocity = -DefaultVelocity;
-		} else {
-			velocity = DefaultVelocity;
+		if (hitPoint > 0) {
+			if (on) {
+				velocity = -DefaultVelocity;
+				setImageResourceId(R.drawable.andou_diagmore01);
+			} else {
+				velocity = DefaultVelocity;
+				setImageResourceId(R.drawable.andou_diag01);
+			}
 		}
 	}
 	
