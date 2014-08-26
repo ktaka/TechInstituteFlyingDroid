@@ -147,7 +147,9 @@ public class GameView extends SurfaceView implements Callback {
 			frameNo++;
 		}
 	}
+	
 	GameThread gameThread;
+	Context context;
 	
 	/**
 	 * @param context
@@ -164,14 +166,9 @@ public class GameView extends SurfaceView implements Callback {
 	public GameView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		
+		this.context = context;
 		SurfaceHolder holder = getHolder();
         holder.addCallback(this);
-        gameThread = new GameThread(holder, context, new Handler() {
-        	@Override
-            public void handleMessage(Message msg) {
-        		super.handleMessage(msg);
-        	}
-        });
         
         setOnTouchListener(new View.OnTouchListener() {
 			
@@ -213,11 +210,19 @@ public class GameView extends SurfaceView implements Callback {
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
+        gameThread = new GameThread(holder, context, new Handler() {
+        	@Override
+            public void handleMessage(Message msg) {
+        		super.handleMessage(msg);
+        	}
+        });
+		
 		gameThread.start();
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
+		gameThread.shouldContinue = false;
 		gameThread = null;
 	}
 
